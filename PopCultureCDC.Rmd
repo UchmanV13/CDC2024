@@ -1,0 +1,679 @@
+---
+title: "Pop Culture"
+output: html_document
+date: "2024-09-28"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+
+library(httr)
+library(jsonlite)
+
+url = "http://tour-pedia.org/api/getReviews?location=Rome"
+
+response= GET(url, timeout(60))
+
+if (status_code(response) == 200) {
+  # Parse the response as JSON
+  data <- content(response, as = "text")
+  json_data <- fromJSON(data)
+} else {
+  stop("Failed to fetch data from API")
+}
+Rome <- as.data.frame(json_data)
+Rome
+```
+
+Importing Data:
+
+```{r}
+url = "http://tour-pedia.org/api/getReviews?location=Amsterdam"
+
+response= GET(url, timeout(60))
+
+if (status_code(response) == 200) {
+  # Parse the response as JSON
+  data <- content(response, as = "text")
+  json_data <- fromJSON(data)
+} else {
+  stop("Failed to fetch data from API")
+}
+
+Amsterdam <- as.data.frame(json_data)
+Amsterdam
+
+
+```
+
+```{r}
+url = "http://tour-pedia.org/api/getReviews?location=Tuscany"
+
+response= GET(url, timeout(60))
+
+if (status_code(response) == 200) {
+  # Parse the response as JSON
+  data <- content(response, as = "text")
+  json_data <- fromJSON(data)
+} else {
+  stop("Failed to fetch data from API")
+}
+Tuscany <- as.data.frame(json_data)
+Tuscany
+
+
+```
+
+```{r}
+url = "http://tour-pedia.org/api/getReviews?location=Barcelona"
+
+response= GET(url, timeout(60))
+
+if (status_code(response) == 200) {
+  # Parse the response as JSON
+  data <- content(response, as = "text")
+  json_data <- fromJSON(data)
+} else {
+  stop("Failed to fetch data from API")
+}
+
+Barcelona <- as.data.frame(json_data)
+Barcelona
+
+
+```
+
+
+
+```{r}
+url = "http://tour-pedia.org/api/getReviews?location=Berlin"
+
+response= GET(url, timeout(60))
+
+if (status_code(response) == 200) {
+  # Parse the response as JSON
+  data <- content(response, as = "text")
+  json_data <- fromJSON(data)
+} else {
+  stop("Failed to fetch data from API")
+}
+
+Berlin <- as.data.frame(json_data)
+Berlin
+
+arrange(Berlin, desc(rating))
+```
+
+
+```{r}
+url = "http://tour-pedia.org/api/getReviews?location=Dubai"
+
+response= GET(url, timeout(60))
+
+if (status_code(response) == 200) {
+  # Parse the response as JSON
+  data <- content(response, as = "text")
+  json_data <- fromJSON(data)
+} else {
+  stop("Failed to fetch data from API")
+}
+
+Dubai <- as.data.frame(json_data)
+Dubai
+
+
+```
+
+
+
+```{r}
+url = "http://tour-pedia.org/api/getReviews?location=London"
+
+response= GET(url, timeout(60))
+
+if (status_code(response) == 200) {
+  # Parse the response as JSON
+  data <- content(response, as = "text")
+  json_data <- fromJSON(data)
+} else {
+  stop("Failed to fetch data from API")
+}
+
+London <- as.data.frame(json_data)
+London
+
+
+```
+
+
+```{r}
+url = "http://tour-pedia.org/api/getReviews?location=Paris"
+
+response= GET(url, timeout(60))
+
+if (status_code(response) == 200) {
+  # Parse the response as JSON
+  data <- content(response, as = "text")
+  json_data <- fromJSON(data)
+} else {
+  stop("Failed to fetch data from API")
+}
+
+Paris <- as.data.frame(json_data)
+Paris
+
+
+```
+```{r}
+Amsterdam$location="Amsterdam"
+Tuscany$location="Tuscany"
+Barcelona$location="Barcelona"
+Berlin$location="Berlin"
+Dubai$location="Dubai"
+London$location="London"
+Paris$location="Paris"
+Rome$location="Rome"
+```
+
+```{r}
+library(dplyr)
+Tuscany$rating=as.character(Tuscany$rating)
+Reviews=bind_rows(Amsterdam, Tuscany, Barcelona, Berlin, Dubai, London, Paris, Rome)
+Reviews=Reviews[, c("location", "rating", "language", "polarity", "source", "text", "time", "wordsCount", "details")]
+Reviews
+#write.csv(Reviews, "Reviews2.csv", row.names = FALSE)
+#getwd()
+```
+
+
+
+
+```{r}
+library(tidytext)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(stringr)
+```
+
+
+```{r}
+entran=read.csv("C:/Users/19194/Downloads/Subset of Reviews_Top10_ENun.csv")
+spanish=read.csv("C:/Users/19194/Downloads/Subset of Reviews_Top10_ESEN - Subset of Reviews_Top10_ESun.csv")
+spanish$text=spanish$Translation_ESEN
+spanish=spanish[, -9]
+entran=bind_rows(entran, spanish)
+entran2=filter(entran, location=="Rome")
+
+```
+
+```{r}
+library(wordcloud)
+library(RColorBrewer)
+tidy_reviews <- entran %>%
+  unnest_tokens(word, text)
+data("stop_words")
+cleaned_reviews <- tidy_reviews %>%
+  anti_join(stop_words, by = "word")
+
+cleaned_reviews <- cleaned_reviews %>%
+  filter(!str_detect(word, "^[0-9]+$"))
+
+key_words <- cleaned_reviews %>%
+  count(word, sort = TRUE) %>%
+  top_n(30, n)
+
+ggplot(key_words, aes(reorder(word, n), n)) +
+  geom_col(show.legend = FALSE, fill = "steelblue") +
+  labs(title = "Top Descriptive Words in Customer Reviews",
+       y = "Frequency of Words", x = NULL) +
+  coord_flip()
+
+word_counts <- cleaned_reviews %>%
+  count(word, sort = TRUE)
+
+wordcloud(words = word_counts$word, freq = word_counts$n, min.freq = 1,max.words = 100,random.order = FALSE, rot.per = 0.35, colors = brewer.pal(8, "Dark2"))
+
+sentiment_reviews <- tidy_reviews %>%
+  anti_join(stop_words, by = "word") %>%
+  inner_join(get_sentiments("bing"), by = "word")
+
+sentiment_summary <- sentiment_reviews %>%
+  count(sentiment, sort = TRUE)
+
+print(sentiment_summary)
+
+key_words_sentiment <- sentiment_reviews %>%
+  count(word, sentiment, sort = TRUE) %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 30) %>%
+  ungroup()
+print(key_words)
+
+ggplot(key_words_sentiment, aes(reorder(word, n), n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(title = "Top Sentiments in Customer Reviews",
+       y = "Frequency of Words", x = NULL) +
+  coord_flip()
+```
+
+
+
+```{r}
+
+
+tidy_reviews <- filter(entran, location=="Rome") %>%
+  unnest_tokens(word, text)
+data("stop_words")
+cleaned_reviews <- tidy_reviews %>%
+  anti_join(stop_words, by = "word")
+
+cleaned_reviews <- cleaned_reviews %>%
+  filter(!str_detect(word, "^[0-9]+$"))
+
+key_words <- cleaned_reviews %>%
+  count(word, sort = TRUE) %>%
+  top_n(30, n)
+
+ggplot(key_words, aes(reorder(word, n), n)) +
+  geom_col(show.legend = FALSE, fill = "steelblue") +
+  labs(title = "Top Descriptive Words in Customer Reviews",
+       y = "Frequency of Words", x = NULL) +
+  coord_flip()
+
+word_counts <- cleaned_reviews %>%
+  count(word, sort = TRUE)
+
+wordcloud(words = word_counts$word, freq = word_counts$n, min.freq = 1,max.words = 100,random.order = FALSE, rot.per = 0.35, colors = brewer.pal(8, "Dark2"))
+
+sentiment_reviews <- tidy_reviews %>%
+  anti_join(stop_words, by = "word") %>%
+  inner_join(get_sentiments("bing"), by = "word")
+
+sentiment_summary <- sentiment_reviews %>%
+  count(sentiment, sort = TRUE)
+
+print(sentiment_summary)
+
+key_words_sentiment <- sentiment_reviews %>%
+  count(word, sentiment, sort = TRUE) %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 30) %>%
+  ungroup()
+print(key_words)
+
+ggplot(key_words_sentiment, aes(reorder(word, n), n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(title = "Top Sentiments in Customer Reviews",
+       y = "Frequency of Words", x = NULL) +
+  coord_flip()
+```
+
+```{r}
+
+
+tidy_reviews <- filter(entran, location=="Berlin") %>%
+  unnest_tokens(word, text)
+data("stop_words")
+cleaned_reviews <- tidy_reviews %>%
+  anti_join(stop_words, by = "word")
+
+cleaned_reviews <- cleaned_reviews %>%
+  filter(!str_detect(word, "^[0-9]+$"))
+
+key_words <- cleaned_reviews %>%
+  count(word, sort = TRUE) %>%
+  top_n(30, n)
+
+ggplot(key_words, aes(reorder(word, n), n)) +
+  geom_col(show.legend = FALSE, fill = "steelblue") +
+  labs(title = "Top Descriptive Words in Customer Reviews",
+       y = "Frequency of Words", x = NULL) +
+  coord_flip()
+
+word_counts <- cleaned_reviews %>%
+  count(word, sort = TRUE)
+
+wordcloud(words = word_counts$word, freq = word_counts$n, min.freq = 1,max.words = 100,random.order = FALSE, rot.per = 0.35, colors = brewer.pal(8, "Dark2"))
+
+sentiment_reviews <- tidy_reviews %>%
+  anti_join(stop_words, by = "word") %>%
+  inner_join(get_sentiments("bing"), by = "word")
+
+sentiment_summary <- sentiment_reviews %>%
+  count(sentiment, sort = TRUE)
+
+print(sentiment_summary)
+
+key_words_sentiment <- sentiment_reviews %>%
+  count(word, sentiment, sort = TRUE) %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 30) %>%
+  ungroup()
+print(key_words)
+
+ggplot(key_words_sentiment, aes(reorder(word, n), n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(title = "Top Sentiments in Customer Reviews",
+       y = "Frequency of Words", x = NULL) +
+  coord_flip()
+```
+
+```{r}
+
+
+tidy_reviews <- filter(entran, location=="Amsterdam") %>%
+  unnest_tokens(word, text)
+data("stop_words")
+cleaned_reviews <- tidy_reviews %>%
+  anti_join(stop_words, by = "word")
+
+cleaned_reviews <- cleaned_reviews %>%
+  filter(!str_detect(word, "^[0-9]+$"))
+
+key_words <- cleaned_reviews %>%
+  count(word, sort = TRUE) %>%
+  top_n(30, n)
+
+ggplot(key_words, aes(reorder(word, n), n)) +
+  geom_col(show.legend = FALSE, fill = "steelblue") +
+  labs(title = "Top Descriptive Words in Customer Reviews",
+       y = "Frequency of Words", x = NULL) +
+  coord_flip()
+
+word_counts <- cleaned_reviews %>%
+  count(word, sort = TRUE)
+
+wordcloud(words = word_counts$word, freq = word_counts$n, min.freq = 1,max.words = 100,random.order = FALSE, rot.per = 0.35, colors = brewer.pal(8, "Dark2"))
+
+sentiment_reviews <- tidy_reviews %>%
+  anti_join(stop_words, by = "word") %>%
+  inner_join(get_sentiments("bing"), by = "word")
+
+sentiment_summary <- sentiment_reviews %>%
+  count(sentiment, sort = TRUE)
+
+print(sentiment_summary)
+
+key_words_sentiment <- sentiment_reviews %>%
+  count(word, sentiment, sort = TRUE) %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 30) %>%
+  ungroup()
+print(key_words)
+
+ggplot(key_words_sentiment, aes(reorder(word, n), n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(title = "Top Sentiments in Customer Reviews",
+       y = "Frequency of Words", x = NULL) +
+  coord_flip()
+```
+
+```{r}
+
+
+tidy_reviews <- filter(entran, location=="Barcelona") %>%
+  unnest_tokens(word, text)
+data("stop_words")
+cleaned_reviews <- tidy_reviews %>%
+  anti_join(stop_words, by = "word")
+
+cleaned_reviews <- cleaned_reviews %>%
+  filter(!str_detect(word, "^[0-9]+$"))
+
+key_words <- cleaned_reviews %>%
+  count(word, sort = TRUE) %>%
+  top_n(30, n)
+
+ggplot(key_words, aes(reorder(word, n), n)) +
+  geom_col(show.legend = FALSE, fill = "steelblue") +
+  labs(title = "Top Descriptive Words in Customer Reviews",
+       y = "Frequency of Words", x = NULL) +
+  coord_flip()
+
+word_counts <- cleaned_reviews %>%
+  count(word, sort = TRUE)
+
+wordcloud(words = word_counts$word, freq = word_counts$n, min.freq = 1,max.words = 100,random.order = FALSE, rot.per = 0.35, colors = brewer.pal(8, "Dark2"))
+
+sentiment_reviews <- tidy_reviews %>%
+  anti_join(stop_words, by = "word") %>%
+  inner_join(get_sentiments("bing"), by = "word")
+
+sentiment_summary <- sentiment_reviews %>%
+  count(sentiment, sort = TRUE)
+
+print(sentiment_summary)
+
+key_words_sentiment <- sentiment_reviews %>%
+  count(word, sentiment, sort = TRUE) %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 30) %>%
+  ungroup()
+print(key_words)
+
+ggplot(key_words_sentiment, aes(reorder(word, n), n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(title = "Top Sentiments in Customer Reviews",
+       y = "Frequency of Words", x = NULL) +
+  coord_flip()
+```
+
+```{r}
+
+
+tidy_reviews <- filter(entran, location=="Tuscany") %>%
+  unnest_tokens(word, text)
+data("stop_words")
+cleaned_reviews <- tidy_reviews %>%
+  anti_join(stop_words, by = "word")
+
+cleaned_reviews <- cleaned_reviews %>%
+  filter(!str_detect(word, "^[0-9]+$"))
+
+key_words <- cleaned_reviews %>%
+  count(word, sort = TRUE) %>%
+  top_n(30, n)
+
+ggplot(key_words, aes(reorder(word, n), n)) +
+  geom_col(show.legend = FALSE, fill = "steelblue") +
+  labs(title = "Top Descriptive Words in Customer Reviews",
+       y = "Frequency of Words", x = NULL) +
+  coord_flip()
+
+word_counts <- cleaned_reviews %>%
+  count(word, sort = TRUE)
+
+wordcloud(words = word_counts$word, freq = word_counts$n, min.freq = 1,max.words = 100,random.order = FALSE, rot.per = 0.35, colors = brewer.pal(8, "Dark2"))
+
+sentiment_reviews <- tidy_reviews %>%
+  anti_join(stop_words, by = "word") %>%
+  inner_join(get_sentiments("bing"), by = "word")
+
+sentiment_summary <- sentiment_reviews %>%
+  count(sentiment, sort = TRUE)
+
+print(sentiment_summary)
+
+key_words_sentiment <- sentiment_reviews %>%
+  count(word, sentiment, sort = TRUE) %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 30) %>%
+  ungroup()
+print(key_words)
+
+ggplot(key_words_sentiment, aes(reorder(word, n), n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(title = "Top Sentiments in Customer Reviews",
+       y = "Frequency of Words", x = NULL) +
+  coord_flip()
+```
+
+```{r}
+
+
+tidy_reviews <- filter(entran, location=="Dubai") %>%
+  unnest_tokens(word, text)
+data("stop_words")
+cleaned_reviews <- tidy_reviews %>%
+  anti_join(stop_words, by = "word")
+
+cleaned_reviews <- cleaned_reviews %>%
+  filter(!str_detect(word, "^[0-9]+$"))
+
+key_words <- cleaned_reviews %>%
+  count(word, sort = TRUE) %>%
+  top_n(30, n)
+
+ggplot(key_words, aes(reorder(word, n), n)) +
+  geom_col(show.legend = FALSE, fill = "steelblue") +
+  labs(title = "Top Descriptive Words in Customer Reviews",
+       y = "Frequency of Words", x = NULL) +
+  coord_flip()
+
+word_counts <- cleaned_reviews %>%
+  count(word, sort = TRUE)
+
+wordcloud(words = word_counts$word, freq = word_counts$n, min.freq = 1,max.words = 100,random.order = FALSE, rot.per = 0.35, colors = brewer.pal(8, "Dark2"))
+
+sentiment_reviews <- tidy_reviews %>%
+  anti_join(stop_words, by = "word") %>%
+  inner_join(get_sentiments("bing"), by = "word")
+
+sentiment_summary <- sentiment_reviews %>%
+  count(sentiment, sort = TRUE)
+
+print(sentiment_summary)
+
+key_words_sentiment <- sentiment_reviews %>%
+  count(word, sentiment, sort = TRUE) %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 30) %>%
+  ungroup()
+print(key_words)
+
+ggplot(key_words_sentiment, aes(reorder(word, n), n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(title = "Top Sentiments in Customer Reviews",
+       y = "Frequency of Words", x = NULL) +
+  coord_flip()
+```
+
+
+```{r}
+
+
+tidy_reviews <- filter(entran, location=="London") %>%
+  unnest_tokens(word, text)
+data("stop_words")
+cleaned_reviews <- tidy_reviews %>%
+  anti_join(stop_words, by = "word")
+
+cleaned_reviews <- cleaned_reviews %>%
+  filter(!str_detect(word, "^[0-9]+$"))
+
+key_words <- cleaned_reviews %>%
+  count(word, sort = TRUE) %>%
+  top_n(30, n)
+
+ggplot(key_words, aes(reorder(word, n), n)) +
+  geom_col(show.legend = FALSE, fill = "steelblue") +
+  labs(title = "Top Descriptive Words in Customer Reviews",
+       y = "Frequency of Words", x = NULL) +
+  coord_flip()
+
+word_counts <- cleaned_reviews %>%
+  count(word, sort = TRUE)
+
+wordcloud(words = word_counts$word, freq = word_counts$n, min.freq = 1,max.words = 100,random.order = FALSE, rot.per = 0.35, colors = brewer.pal(8, "Dark2"))
+
+sentiment_reviews <- tidy_reviews %>%
+  anti_join(stop_words, by = "word") %>%
+  inner_join(get_sentiments("bing"), by = "word")
+
+sentiment_summary <- sentiment_reviews %>%
+  count(sentiment, sort = TRUE)
+
+print(sentiment_summary)
+
+key_words_sentiment <- sentiment_reviews %>%
+  count(word, sentiment, sort = TRUE) %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 30) %>%
+  ungroup()
+print(key_words)
+
+ggplot(key_words_sentiment, aes(reorder(word, n), n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(title = "Top Sentiments in Customer Reviews",
+       y = "Frequency of Words", x = NULL) +
+  coord_flip()
+```
+
+
+```{r}
+
+tidy_reviews <- filter(entran, location=="Paris") %>%
+  unnest_tokens(word, text)
+data("stop_words")
+cleaned_reviews <- tidy_reviews %>%
+  anti_join(stop_words, by = "word")
+
+cleaned_reviews <- cleaned_reviews %>%
+  filter(!str_detect(word, "^[0-9]+$"))
+
+key_words <- cleaned_reviews %>%
+  count(word, sort = TRUE) %>%
+  top_n(30, n)
+
+ggplot(key_words, aes(reorder(word, n), n)) +
+  geom_col(show.legend = FALSE, fill = "steelblue") +
+  labs(title = "Top Descriptive Words in Customer Reviews",
+       y = "Frequency of Words", x = NULL) +
+  coord_flip()
+
+word_counts <- cleaned_reviews %>%
+  count(word, sort = TRUE)
+
+wordcloud(words = word_counts$word, freq = word_counts$n, min.freq = 1,max.words = 100,random.order = FALSE, rot.per = 0.35, colors = brewer.pal(8, "Dark2"))
+
+sentiment_reviews <- tidy_reviews %>%
+  anti_join(stop_words, by = "word") %>%
+  inner_join(get_sentiments("bing"), by = "word")
+
+sentiment_summary <- sentiment_reviews %>%
+  count(sentiment, sort = TRUE)
+
+print(sentiment_summary)
+
+key_words_sentiment <- sentiment_reviews %>%
+  count(word, sentiment, sort = TRUE) %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 30) %>%
+  ungroup()
+print(key_words)
+
+ggplot(key_words_sentiment, aes(reorder(word, n), n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(title = "Top Sentiments in Customer Reviews",
+       y = "Frequency of Words", x = NULL) +
+  coord_flip()
+```
